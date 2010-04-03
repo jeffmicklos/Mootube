@@ -20,7 +20,6 @@ foreach($ids as $key=>$value) {
 }
 
 $object=json_encode($holder);
-//echo stripslashes($object);
 echo $object;
 
 ?>
