@@ -6,63 +6,66 @@
 var Mootube = new Class({
 
 	Implements: Options,
-	
+
 	options: { 
 		which: 'mootube',
 		removeLink: true,
-		details: true,
+		showDetails: true,
 		controller: 'controller.php'
 	},
-	
-	initialize: function(options){
-		this.setOptions(options);    		
-		if(this.options.details===true) { this.getData(); }
-		else { this.renderEmbed(); }
+
+	initialize: function(options) {
+		this.setOptions(options);
+		this.getData();
 		
 	},
-	
+
 	getData: function() {
-		var links=$$('a[rel='+this.options.which+']'); 
-		var ids='';
-		var that=this;
-		
-		for(var i=0;i<links.length;i++){
-			
-			if(links[i].getProperty('href').contains('watch?v=')) { var id=links[i].getProperty('href').split('watch?v='); }
-			else if(links[i].getProperty('href').contains('v/')) { var id=links[i].getProperty('href').split('v/'); }
-		
-			ids+=id[1]+'|';	
-		
+		var links = $$('a[rel='+this.options.which+']'),
+			that = this,
+			videos = [];
+
+		for(var i=0; i < links.length; i++) {
+
+			videos.push(links[i].getProperty('href'));
+
 		}
-		
-		var myRequest = new Request({
-			url: that.options.controller, 
-			method: 'get', 
-			onSuccess: function(responseText) { that.ajax_renderEmbed(JSON.decode(responseText)); }
-		}).send('ids='+ids);
-		    	
+
+		new Request({
+			url: that.options.controller,
+			method: 'get',
+			onSuccess: function(responseText) {
+				that.renderEmbed(JSON.decode(responseText));
+			}
+		}).send('videos=' + videos.join('|'));
+
 	},
-	
-	ajax_renderEmbed: function(object) {
-	    		
-		var links=$$('a[rel='+this.options.which+']');
+
+	enderEmbed: function(object) {
+
+		var links = $$('a[rel='+this.options.which+']');
 		
 		for(var i=0;i<links.length;i++){
 		
-			var description  = new Element('div', {id: 'mootube_description'});
-			var rel=$(document.body).getElement('a[href='+links[i].getProperty('href')+']');
-			
-			var el = new Element('div',{'html':object[i].html}).inject(rel,'after');
-			description.inject(el,'after');
-			
-			var descrip=
-			object[i].title
-			+ ' on YouTube by '
-			+ object[i].author_name
-			description.set('text',descrip);  
-						
-			if(this.options.removeLink===true) { rel.destroy(); }
-		
+			var currentLink = $(document.body).getElement('a[href='+links[i].getProperty('href')+']');
+			var el = new Element('div',{
+						'html': object[i].html
+					}).inject(currentLink, 'after');
+
+			if(this.options.showDetails) {
+
+				var description = object[i].title + ' by ' + object[i].author_name;
+
+				new Element('div', {
+					id: 'mootube_description'
+				}).set('text', description).inject(el, 'after');
+
+			} 
+
+			if(this.options.removeLink) {
+				currentLink.destroy();
+			}
+
 		}
 	}
 });
